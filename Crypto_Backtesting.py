@@ -12,53 +12,12 @@ if __name__ == "__main__":
     LOCAL = True
     warnings.simplefilter("ignore", SwaggerValidationWarning)
     KEYFILE = 'keys.txt'
-    # FILENAME = "Bitmex_Hist.csv"
-    FILENAME = "Test.csv"
+    FILENAME = "Bitmex_Hist.csv"
+    # FILENAME = "Test.csv"
 else:
     LOCAL = False
 
 
-#
-# def pull(start=0, size=100):
-#     return client.Trade.Trade_get(symbol="XBT", count=size, start=start)
-
-#
-# client = bitmex(test=False, api_key=api_key, api_secret=api_secret)
-# # total_size = 1_000_000
-# start_index = 23_000_000
-# total_size = 1_000_000
-# split_size = 100_000
-# pull_size = 1_000
-# pull_count = int(split_size / pull_size)
-# split_count = int(total_size / split_size)
-# print("Split Count: {}".format(split_count))
-# file_name = "Bitmex_Hist.csv"
-# pulled = pull(start=0, size=1)
-# remaining = pulled.response().metadata.headers['X-RateLimit-Remaining']
-# time.sleep(2)
-# for j in trange(0, split_count):
-#     split_start = j * split_size
-#     starting = start_index
-#     offset = split_start + starting
-#     storage_df = pd.json_normalize(pull(start=offset, size=pull_size).result()[0])
-#     storage_df.index = range(offset, offset + pull_size)
-#     for i in range(1, pull_count):
-#         if i % 25 == 0:
-#             print("{} of {} in split {}\n".format(i, pull_count, j))
-#         starting = (i * pull_size) + offset
-#         if int(remaining) < 10:
-#             print(remaining)
-#             time.sleep(15)
-#             if int(remaining) < 2:
-#                 time.sleep(600)
-#         pulled = pull(start=starting, size=pull_size)
-#         df_temp = pd.json_normalize(pulled.result()[0])
-#         remaining = pulled.response().metadata.headers['X-RateLimit-Remaining']
-#         df_temp.index = range(starting, starting + pull_size)
-#         storage_df = storage_df.append(df_temp)
-#         time.sleep(1)
-#     storage_df.to_csv(file_name, mode='a', header=False)
-#     print("Stored split: {}  - API Pulls Remaining: {}".format(j, remaining))
 class DataPuller:
     def __init__(self, save_filename, api_filename):
         self.verbose = True
@@ -74,6 +33,7 @@ class DataPuller:
         self.client = None
         self.api_limit = 60
         self.set_start_index()
+        self.set_pull_params()
         self.load_client(api_filename)
         self.check_api_limit(True)
         self.df = None
@@ -135,7 +95,6 @@ class DataPuller:
 
 if LOCAL:
     DataPull = DataPuller(FILENAME, KEYFILE)
-    DataPull.set_pull_params(12_000, 3_000, 1_000)
     print(DataPull.start_index)
     DataPull.pull()
     print(DataPull.start_index)
