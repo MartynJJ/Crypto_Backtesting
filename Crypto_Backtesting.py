@@ -1,25 +1,31 @@
-from bitmex import bitmex
-import json
-from datetime import datetime as dt
-import pandas as pd
-import warnings
-from swagger_spec_validator.common import SwaggerValidationWarning
-import numpy as np
-import time
-from tqdm.auto import tqdm, trange
+
 
 if __name__ == "__main__":
+    from bitmex import bitmex
+    import pandas as pd
+    import warnings
+    from swagger_spec_validator.common import SwaggerValidationWarning
+    import time
+    from tqdm.auto import trange
     LOCAL = True
     warnings.simplefilter("ignore", SwaggerValidationWarning)
-    KEYFILE = 'keys.txt'
-    FILENAME = "Bitmex_Hist.csv"
-    # FILENAME = "Test.csv"
 else:
     LOCAL = False
 
 
 class DataPuller:
+    __version__ = 0.1
+    __author__ = "Martyn Jepson"
+
     def __init__(self, save_filename, api_filename):
+        from bitmex import bitmex
+        import pandas as pd
+        import warnings
+        from swagger_spec_validator.common import SwaggerValidationWarning
+        import time
+        from tqdm.auto import trange
+        warnings.simplefilter("ignore", SwaggerValidationWarning)
+
         self.verbose = True
         self.file_name = save_filename
         self.start_index = None
@@ -40,8 +46,8 @@ class DataPuller:
 
     def set_start_index(self):
         with open(self.file_name) as f:
-            lastline = (f.readlines())[-1]
-            self.start_index = int(lastline.split(',')[0]) + 1
+            last_line = (f.readlines())[-1]
+            self.start_index = int(last_line.split(',')[0]) + 1
 
     def set_pull_params(self, total_pull_size=1_000_000, split_size=10_000, pull_size=1_000):
         self.total_pull_size = total_pull_size
@@ -68,6 +74,7 @@ class DataPuller:
         return self.client.Trade.Trade_get(symbol="XBT", count=size, start=start)
 
     def pull(self):
+        """ Run pull script once parameters are set. """
         for j in trange(0, self.split_count):
             split_start = j * self.split_size
             offset = split_start + self.start_index
@@ -86,7 +93,7 @@ class DataPuller:
                 self.api_limit = pulled.response().metadata.headers['X-RateLimit-Remaining']
                 df_temp.index = range(starting, starting + self.pull_size)
                 self.df = self.df.append(df_temp)
-                time.sleep(1.05)
+                time.sleep(1.08)
             self.df = self.df.to_csv(self.file_name, mode='a', header=False)
             self.df = None
             print("Stored split: {}  - API Pulls Remaining: {}".format(j, self.api_limit))
@@ -94,7 +101,9 @@ class DataPuller:
 
 
 if LOCAL:
-    DataPull = DataPuller(FILENAME, KEYFILE)
+    KEY_FILE = 'keys.txt'
+    FILENAME = "Bitmex_Hist.csv"
+    DataPull = DataPuller(FILENAME, KEY_FILE)
     print(DataPull.start_index)
     DataPull.pull()
     print(DataPull.start_index)
