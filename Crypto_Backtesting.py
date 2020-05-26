@@ -17,7 +17,7 @@ class DataPuller:
     __version__ = 0.1
     __author__ = "Martyn Jepson"
 
-    def __init__(self, save_filename, api_filename):
+    def __init__(self, save_filename, api_filename, verbose=True):
         from bitmex import bitmex
         import pandas as pd
         import warnings
@@ -26,7 +26,7 @@ class DataPuller:
         from tqdm.auto import trange
         warnings.simplefilter("ignore", SwaggerValidationWarning)
 
-        self.verbose = True
+        self.verbose = verbose
         self.file_name = save_filename
         self.start_index = None
         self.total_pull_size = None
@@ -44,10 +44,18 @@ class DataPuller:
         self.check_api_limit(True)
         self.df = None
 
+    def set_verbose_status(self, status):
+        self.verbose = status
+
     def set_start_index(self):
         with open(self.file_name) as f:
             last_line = (f.readlines())[-1]
             self.start_index = int(last_line.split(',')[0]) + 1
+
+    def get_last_date(self):
+        with open(self.file_name) as f:
+            last_line = (f.readlines())[-1]
+            return last_line.split(',')[1]
 
     def set_pull_params(self, total_pull_size=1_000_000, split_size=10_000, pull_size=1_000):
         self.total_pull_size = total_pull_size
@@ -55,6 +63,11 @@ class DataPuller:
         self.pull_size = pull_size
         self.pull_count = int(self.split_size / self.pull_size)
         self.split_count = int(self.total_pull_size / self.split_size)
+
+    def set_total_pull_size(self, total_pull_size):
+        self.total_pull_size = total_pull_size
+        if self.verbose:
+            print("Total Pull Size: {}".format(self.total_pull_size))
 
     def load_client(self, api_key_file, test_status=False):
         keys = open(api_key_file)
@@ -67,6 +80,7 @@ class DataPuller:
         self.api_limit = self.client.APIKey.APIKey_get().response().metadata.headers['X-RateLimit-Remaining']
         if verbose:
             print("API Pulls Remaining: {}".format(self.api_limit))
+            return self.api_limit
         else:
             return self.api_limit
 
@@ -96,7 +110,9 @@ class DataPuller:
                 time.sleep(1.08)
             self.df = self.df.to_csv(self.file_name, mode='a', header=False)
             self.df = None
-            print("Stored split: {}  - API Pulls Remaining: {}".format(j, self.api_limit))
+            if self.verbose:
+                print("Stored split: {}  -  API Pulls Remaining: {}  -  Last Date: {}".format(j, self.api_limit,
+                                                                                              self.get_last_date()))
         self.set_start_index()
 
 
@@ -105,6 +121,9 @@ if LOCAL:
     FILENAME = "Bitmex_Hist.csv"
     DataPull = DataPuller(FILENAME, KEY_FILE)
     print(DataPull.start_index)
-    DataPull.pull()
+    print(DataPull.get_last_date())
+    DataPull.set_total_pull_size(2_000_000)
+    # DataPull.pull()
     print(DataPull.start_index)
+    print(DataPull.get_last_date())
     print("Complete")
