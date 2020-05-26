@@ -139,4 +139,4 @@ if LOCAL:
     print(DataPull.start_index)
     DataPull.pull()
     print(DataPull.start_index)
-
+    print("Complete")
