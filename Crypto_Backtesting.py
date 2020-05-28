@@ -1,4 +1,11 @@
+import bitmex
+import pandas as pd
+import warnings
+from swagger_spec_validator.common import SwaggerValidationWarning
+import time
+from tqdm.auto import trange
 
+warnings.simplefilter("ignore", SwaggerValidationWarning)
 
 if __name__ == "__main__":
     from bitmex import bitmex
@@ -7,6 +14,7 @@ if __name__ == "__main__":
     from swagger_spec_validator.common import SwaggerValidationWarning
     import time
     from tqdm.auto import trange
+
     LOCAL = True
     warnings.simplefilter("ignore", SwaggerValidationWarning)
 else:
@@ -14,17 +22,8 @@ else:
 
 
 class DataPuller:
-    __version__ = 0.1
-    __author__ = "Martyn Jepson"
 
     def __init__(self, save_filename, api_filename, verbose=True):
-        from bitmex import bitmex
-        import pandas as pd
-        import warnings
-        from swagger_spec_validator.common import SwaggerValidationWarning
-        import time
-        from tqdm.auto import trange
-        warnings.simplefilter("ignore", SwaggerValidationWarning)
 
         self.verbose = verbose
         self.file_name = save_filename
@@ -70,11 +69,12 @@ class DataPuller:
             print("Total Pull Size: {}".format(self.total_pull_size))
 
     def load_client(self, api_key_file, test_status=False):
+
         keys = open(api_key_file)
         self.api_key = keys.readline()[:-1]
         self.api_secret = keys.readline()
         keys.close()
-        self.client = bitmex(test=test_status, api_key=self.api_key, api_secret=self.api_secret)
+        self.client = bitmex.bitmex(test=test_status, api_key=self.api_key, api_secret=self.api_secret)
 
     def check_api_limit(self, verbose=False):
         self.api_limit = self.client.APIKey.APIKey_get().response().metadata.headers['X-RateLimit-Remaining']
